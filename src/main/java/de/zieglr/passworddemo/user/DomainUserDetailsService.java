@@ -27,9 +27,11 @@ public class DomainUserDetailsService implements UserDetailsService, UserDetails
 
     @Override
     public UserDetails updatePassword(UserDetails user, String newPassword) {
-        log.info("Update password for user {}", user.getUsername());
         return userRepository.findByUsername(user.getUsername())
                 .map(storedUser -> {
+                    log.info("Update stored password for user {}. Old hash {} new hash {}.", user.getUsername(),
+                            storedUser.getPasswordHash(), newPassword);
+
                     storedUser.setPasswordHash(newPassword);
                     storedUser.setLastPasswordChange(Instant.now());
                     userRepository.save(storedUser);

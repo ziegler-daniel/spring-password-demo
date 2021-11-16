@@ -1,17 +1,17 @@
 package de.zieglr.passworddemo.configuration;
 
-import lombok.SneakyThrows;
+import de.zieglr.passworddemo.configuration.password.LegacyMd5PasswordEncoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import javax.xml.bind.DatatypeConverter;
-import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,38 +19,28 @@ import java.util.Map;
 @Configuration
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter  {
 
-    private static class LegacyMd5PasswordEncoder implements PasswordEncoder {
-        @SneakyThrows
-        @Override
-        public String encode(CharSequence rawPassword) {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            md.update(rawPassword.toString().getBytes());
-            byte[] digest = md.digest();
-            return DatatypeConverter.printHexBinary(digest);
-        }
+    private static final String PASSWORD_ENCODER_MD5 = "md5";
+    private static final String PASSWORD_ENCODER_BCRYPT = "bcrypt";
+    private static final String PASSWORD_ENCODER_ARGON = "argon2";
 
-        @Override
-        public boolean matches(CharSequence rawPassword, String encodedPassword) {
-            return encode(rawPassword).equalsIgnoreCase(encodedPassword);
-        }
-
-        @Override
-        public boolean upgradeEncoding(String encodedPassword) {
-            return true;
-        }
-    }
+    @Value("${app.password-encoder}")
+    private String passwordEncoder;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
+        final LegacyMd5PasswordEncoder legacyMd5PasswordEncoder =
+                new LegacyMd5PasswordEncoder(!PASSWORD_ENCODER_MD5.equals(passwordEncoder));
+
         final Map<String, PasswordEncoder> encoders = new HashMap<>();
-        encoders.put("bcrypt", new BCryptPasswordEncoder());
-        encoders.put("md5", new LegacyMd5PasswordEncoder());
+        encoders.put(PASSWORD_ENCODER_BCRYPT, new BCryptPasswordEncoder());
+        encoders.put(PASSWORD_ENCODER_MD5, legacyMd5PasswordEncoder);
+        encoders.put(PASSWORD_ENCODER_ARGON, new Argon2PasswordEncoder(32, 64, 1, 1 << 12, 5));
 
         final DelegatingPasswordEncoder delegatingPasswordEncoder =
-                new DelegatingPasswordEncoder("bcrypt", encoders);
+                new DelegatingPasswordEncoder(passwordEncoder, encoders);
 
         // Password encoder if there was no match
-        delegatingPasswordEncoder.setDefaultPasswordEncoderForMatches(new LegacyMd5PasswordEncoder());
+        delegatingPasswordEncoder.setDefaultPasswordEncoderForMatches(legacyMd5PasswordEncoder);
         return delegatingPasswordEncoder;
     }
 
