@@ -11,6 +11,7 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.scrypt.SCryptPasswordEncoder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,6 +23,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter  {
     private static final String PASSWORD_ENCODER_MD5 = "md5";
     private static final String PASSWORD_ENCODER_BCRYPT = "bcrypt";
     private static final String PASSWORD_ENCODER_ARGON = "argon2";
+    private static final String PASSWORD_ENCODER_SCRYPT = "scrypt";
 
     @Value("${app.password-encoder}")
     private String passwordEncoder;
@@ -34,7 +36,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter  {
         final Map<String, PasswordEncoder> encoders = new HashMap<>();
         encoders.put(PASSWORD_ENCODER_BCRYPT, new BCryptPasswordEncoder());
         encoders.put(PASSWORD_ENCODER_MD5, legacyMd5PasswordEncoder);
-        encoders.put(PASSWORD_ENCODER_ARGON, new Argon2PasswordEncoder(32, 64, 1, 1 << 12, 5));
+        encoders.put(PASSWORD_ENCODER_ARGON, new Argon2PasswordEncoder());
+        encoders.put(PASSWORD_ENCODER_SCRYPT, new SCryptPasswordEncoder());
 
         final DelegatingPasswordEncoder delegatingPasswordEncoder =
                 new DelegatingPasswordEncoder(passwordEncoder, encoders);

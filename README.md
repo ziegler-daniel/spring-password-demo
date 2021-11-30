@@ -6,7 +6,7 @@ Spring Boot Security.
 You can create a new user with the following curl call:
 `curl -d '{"username": "test", "password": "test"}' -H 'Content-Type: application/json' -X POST http://localhost:8080/api/v1/user/register`
 
-This will create the user "test" with password "test". The password encoder used to store the password is defined in 
+This will create the user "test" with the password "test". The password encoder used to store the password is defined in 
 [application.properties](src/main/resources/application.properties).
 
 ## Login
@@ -14,3 +14,9 @@ Open [http://localhost:8080](http://localhost:8080) in the browser and you will 
 
 ## Password hash update
 If a user's password was not encoded with the current password encoder, it will be updated upon the next login.
+
+## Supported Hash Algorithms
+* Argon2 (the preferred hash algorithm according to [OWASP](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html))
+* Bcrypt
+* Scrypt
+* MD5 (don't use this in real)
